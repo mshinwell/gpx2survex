@@ -1,0 +1,5 @@
+(executable (
+  (name gpx2survex)
+  (libraries (base xmlm core))
+  (preprocess (pps (ppx_let)))
+))
