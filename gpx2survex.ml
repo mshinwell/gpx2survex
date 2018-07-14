@@ -159,6 +159,10 @@ let parse ~gpx_file =
           let altitude = find_unique_datum_toplevel wpt_contents "ele" in
           let time = find_unique_datum_toplevel wpt_contents "time" in
           let name = find_unique_datum_toplevel wpt_contents "name" in
+          let name =
+            Option.map name
+              ~f:(fun name -> String.tr name ~target:'.' ~replacement:'_')
+          in
           match latitude, longitude, altitude with
           | Some latitude, Some longitude, Some altitude ->
             let time = Option.map time ~f:Time.of_string in
