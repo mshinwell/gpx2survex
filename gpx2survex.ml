@@ -77,7 +77,7 @@ type track_point = {
   latitude : string;
   longitude : string;
   altitude : string;
-  time : Time.t;
+  time : Time.t option;
 }
 
 type track_segment = track_point list
@@ -132,9 +132,9 @@ let parse ~gpx_file =
                     let time =
                       find_unique_datum_toplevel trkpt_contents "time"
                     in
-                    match latitude, longitude, altitude, time with
-                    | Some latitude, Some longitude, Some altitude, Some time ->
-                      let time = Time.of_string time in
+                    match latitude, longitude, altitude with
+                    | Some latitude, Some longitude, Some altitude ->
+                      let time = Option.map time ~f:Time.of_string in
                       let track_point =
                         { latitude;
                           longitude;
@@ -143,7 +143,7 @@ let parse ~gpx_file =
                         }
                       in
                       track_points @ [track_point]
-                    | _, _, _, _ -> malformed ())
+                    | _, _, _ -> malformed ())
               in
               { track with
                 segments = track.segments @ [segment];
@@ -159,9 +159,9 @@ let parse ~gpx_file =
           let altitude = find_unique_datum_toplevel wpt_contents "ele" in
           let time = find_unique_datum_toplevel wpt_contents "time" in
           let name = find_unique_datum_toplevel wpt_contents "name" in
-          match latitude, longitude, altitude, time with
-          | Some latitude, Some longitude, Some altitude, Some time ->
-            let time = Time.of_string time in
+          match latitude, longitude, altitude with
+          | Some latitude, Some longitude, Some altitude ->
+            let time = Option.map time ~f:Time.of_string in
             let point =
               { latitude;
                 longitude;
@@ -175,7 +175,7 @@ let parse ~gpx_file =
               }
             in
             waypoints @ [waypoint]
-          | _, _, _, _ -> malformed ())
+          | _, _, _ -> malformed ())
     in
     { time;
       tracks;
@@ -241,11 +241,16 @@ let write_svx ~gpx ~output ~gpx_file ~gpx_coordinate_system:_
             (station - 1)
             station
         end;
-        Out_channel.fprintf output "*fix %d reference %s %s %s  ; %s\n"
+        Out_channel.fprintf output "*fix %d reference %s %s %s"
           station
           point.longitude point.latitude
-          point.altitude
-          (Time.to_string_abs point.time ~zone:svx_time_zone));
+          point.altitude;
+        begin match point.time with
+        | None -> Out_channel.fprintf output "\n"
+        | Some time ->
+          Out_channel.fprintf output "  ; %s\n"
+            (Time.to_string_abs time ~zone:svx_time_zone)
+        end);
       Out_channel.fprintf output "*end seg%d\n\n" segment_index);
     Out_channel.fprintf output "*end track%d\n\n" track_index);
   List.iteri gpx.waypoints ~f:(fun index waypoint ->
@@ -254,11 +259,16 @@ let write_svx ~gpx ~output ~gpx_file ~gpx_coordinate_system:_
       | None -> Printf.sprintf "wpt%d" index
       | Some name -> String.tr name ~target:' ' ~replacement:'_'
     in
-    Out_channel.fprintf output "*fix %s reference %s %s %s  ; %s\n"
+    Out_channel.fprintf output "*fix %s reference %s %s %s"
       name
       waypoint.point.longitude waypoint.point.latitude
-      waypoint.point.altitude
-      (Time.to_string_abs waypoint.point.time ~zone:svx_time_zone));
+      waypoint.point.altitude;
+    begin match waypoint.point.time with
+    | None -> Out_channel.fprintf output "\n"
+    | Some time ->
+      Out_channel.fprintf output "  ; %s\n"
+        (Time.to_string_abs time ~zone:svx_time_zone)
+    end);
   Out_channel.fprintf output "\n*end %s\n\n" svx_name
 
 let run ~gpx_coordinate_system ~svx_time_zone ~gpx_file ~output_dir =
