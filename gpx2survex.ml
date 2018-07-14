@@ -20,10 +20,16 @@ let input_xml file =
   let chan = In_channel.create file in
   let el tag children = Element (tag, children)  in
   let data str = Data str in
-  let input = Xmlm.make_input (`Channel chan) in
-  let _dtd, xml = Xmlm.input_doc_tree ~el ~data input in
-  In_channel.close chan;
-  xml
+  try
+    let input = Xmlm.make_input (`Channel chan) in
+    let _dtd, xml = Xmlm.input_doc_tree ~el ~data input in
+    In_channel.close chan;
+    xml
+  with Xmlm.Error ((line, column), error) ->
+    Printf.eprintf "XML parsing error (line %d, column %d): %s\n"
+      line column
+      (Xmlm.error_message error);
+    failwith "Cannot parse GPX file"
 
 let fold_nodes xmls name ~init ~f =
   List.fold xmls ~init ~f:(fun acc xml ->
