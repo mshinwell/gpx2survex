@@ -1,0 +1,18 @@
+To install gpx2survex:
+
+1. Install OPAM (e.g. "apt-get install opam") and m4
+
+2. opam switch 4.06.0
+
+3. eval $(opam config env)
+
+4. opam install xmlm core
+
+5. git clone https://github.com/mshinwell/gpx2survex
+
+6. cd gpx2survex
+
+7. dune build gpx2survex.exe
+
+The gpx2survex.exe executable will be found in the "_build/default"
+directory.
