@@ -242,8 +242,8 @@ let write_svx ~gpx ~output ~gpx_file ~gpx_coordinate_system:_
       List.iteri segment ~f:(fun station point ->
         if station > 0 then begin
           Out_channel.fprintf output "%d %d 1.0 000 00\n"
-            (station - 1)
             station
+            (station - 1)
         end;
         Out_channel.fprintf output "*fix %d reference %s %s %s"
           station
