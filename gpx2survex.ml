@@ -196,7 +196,7 @@ let write_svx ~gpx ~output ~gpx_file ~gpx_coordinate_system:_
     gpx_file
     (Time.to_string_abs (Time.now ()) ~zone:(Lazy.force Time.Zone.local));
   begin match gpx.tracks with
-  | track::tracks ->
+  | track::_tracks ->
     begin match track.name with
     | None -> ()
     | Some name -> Out_channel.fprintf output "*title \"%s\"\n" name
