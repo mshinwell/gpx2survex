@@ -1,5 +1,5 @@
-(executable (
+(executable
   (name gpx2survex)
-  (libraries (base xmlm core))
-  (preprocess (pps (ppx_let)))
-))
+  (libraries base xmlm core core_unix.time_unix core_unix.command_unix)
+  (preprocess (pps ppx_let))
+)

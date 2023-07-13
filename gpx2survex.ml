@@ -1,5 +1,7 @@
 open Core
 
+module Time = Time_unix
+
 type xml =
   | Element of Xmlm.tag * xml list
   | Data of string
@@ -35,7 +37,7 @@ let fold_nodes xmls name ~init ~f =
   List.fold xmls ~init ~f:(fun acc xml ->
     match xml with
     | Element (((_, name'), attrs), children) ->
-      if name = name' then f acc attrs children
+      if String.equal name name' then f acc attrs children
       else acc
     | _ -> acc)
 
@@ -44,7 +46,7 @@ let find_unique_node xmls name =
     List.filter_map xmls ~f:(fun xml ->
       match xml with
       | Element (((_, name'), _), children) ->
-        if name = name' then Some children
+        if String.equal name name' then Some children
         else None
       | _ -> None)
   in
@@ -57,7 +59,7 @@ let find_unique_datum_toplevel xmls name =
     List.filter_map xmls ~f:(fun xml ->
       match xml with
       | Element (((_, name'), _), [Data datum])
-          when name = name' -> Some datum
+          when String.equal name name' -> Some datum
       | _ -> None)
   in
   match matching with
@@ -67,7 +69,7 @@ let find_unique_datum_toplevel xmls name =
 let find_attr attrs name =
   let matching =
     List.filter_map attrs ~f:(fun ((_, name'), value) ->
-      if name = name' then Some value else None)
+      if String.equal name name' then Some value else None)
   in
   match matching with
   | [value] -> Some value
@@ -233,6 +235,7 @@ let write_svx ~gpx ~output ~gpx_file ~gpx_coordinate_system:_
   Out_channel.fprintf output "*cs out UTM33N\n\n";
   Out_channel.fprintf output "*cs long-lat\n\n";
   Out_channel.fprintf output "*data normal from to tape compass clino\n";
+  Out_channel.fprintf output "*infer exports\n";
   Out_channel.fprintf output "*flags surface\n\n";
   List.iteri gpx.tracks ~f:(fun track_index track ->
     Out_channel.fprintf output "*begin track%d\n" track_index;
@@ -292,7 +295,7 @@ let run ~gpx_coordinate_system ~svx_time_zone ~gpx_file ~output_dir =
   Out_channel.close output
 
 let () =
-  let open Command.Let_syntax in
+  let open Core.Command.Let_syntax in
   Command.basic
     ~summary:"Convert GPX files to Survex format"
     [%map_open
@@ -311,4 +314,4 @@ let () =
       fun () ->
         run ~gpx_coordinate_system ~svx_time_zone ~gpx_file ~output_dir
     ]
-  |> Command.run
+  |> Command_unix.run
