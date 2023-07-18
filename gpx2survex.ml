@@ -239,7 +239,20 @@ let write_svx ~gpx ~output ~gpx_file ~gpx_coordinate_system:_
   if not underground_legs then
     Out_channel.fprintf output "*flags surface\n\n";
   List.iteri gpx.tracks ~f:(fun track_index track ->
-    Out_channel.fprintf output "*begin track%d\n" track_index;
+    let name =
+      Option.map track.name ~f:(fun name ->
+        name
+        |> String.tr ~target:' ' ~replacement:'_'
+        |> String.tr ~target:'(' ~replacement:'_'
+        |> String.tr ~target:')' ~replacement:'_'
+        |> String.tr ~target:'/' ~replacement:'_'
+        |> String.tr ~target:':' ~replacement:'_'
+        |> String.tr ~target:'.' ~replacement:'_'
+        |> String.lowercase)
+    in
+    (match name with
+    | None -> Out_channel.fprintf output "*begin track%d\n" track_index
+    | Some name -> Out_channel.fprintf output "*begin %s\n" name);
     List.iteri track.segments ~f:(fun segment_index segment ->
       Out_channel.fprintf output "*begin seg%d\n" segment_index;
       List.iteri segment ~f:(fun station point ->
@@ -259,7 +272,9 @@ let write_svx ~gpx ~output ~gpx_file ~gpx_coordinate_system:_
             (Time.to_string_abs time ~zone:svx_time_zone)
         end);
       Out_channel.fprintf output "*end seg%d\n\n" segment_index);
-    Out_channel.fprintf output "*end track%d\n\n" track_index);
+    (match name with
+    | None -> Out_channel.fprintf output "*end track%d\n" track_index
+    | Some name -> Out_channel.fprintf output "*end %s\n" name));
   List.iteri gpx.waypoints ~f:(fun index waypoint ->
     let name =
       match waypoint.name with
