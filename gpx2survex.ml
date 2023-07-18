@@ -248,6 +248,7 @@ let write_svx ~gpx ~output ~gpx_file ~gpx_coordinate_system:_
         |> String.tr ~target:'/' ~replacement:'_'
         |> String.tr ~target:':' ~replacement:'_'
         |> String.tr ~target:'.' ~replacement:'_'
+        |> String.tr ~target:',' ~replacement:'_'
         |> String.lowercase)
     in
     (match name with
